@@ -4,7 +4,7 @@ use crate::token::{
 };
 
 #[derive(Default)]
-struct Lexer {
+pub struct Lexer {
     postion: usize,
     read_position: usize,
     input: String,
