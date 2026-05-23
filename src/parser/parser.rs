@@ -68,13 +68,13 @@ impl Parser {
     fn parse_let_statement(&mut self) -> Option<LetStatement> {
         let mut let_stmt = LetStatement::default();
         let_stmt.token = self.current_token.clone();
-        if !self.expect_peek_token(&Token::Identifier(String::new())) {
+        if !self.expect_peek_token(&Token::Identifier(self.peek_token.clone().unwrap().get_literal().to_string())) {
             return None;
         }
         let current_token = self.current_token.clone().unwrap();
         let literal = current_token.get_literal().to_string();
         let_stmt.name = Some(Identifier::new(current_token, literal));
-        if !self.expect_peek_token(&Token::Assign(String::new())) {
+        if !self.expect_peek_token(&Token::Assign(self.peek_token.clone().unwrap().get_literal().to_string())) {
             return None;
         }
         while !self.current_token_is(&Token::Semicolon(";".to_string())) {
@@ -105,13 +105,13 @@ impl Parser {
     }
     fn peek_token_is(&self, token: &Token) -> bool {
         match &self.peek_token {
-            Some(val) => std::mem::discriminant(val) == std::mem::discriminant(token),
+            Some(val) => val==token,
             None => false,
         }
     }
     fn current_token_is(&self, token: &Token) -> bool {
         match &self.current_token {
-            Some(val) => std::mem::discriminant(val) == std::mem::discriminant(token),
+            Some(val) => val==token,
             None => false,
         }
     }
@@ -148,12 +148,8 @@ mod test {
 
         check_parse_errors(&parser);
 
-        if program.statements.len() != 3 {
-            panic!(
-                "program statements are not equal to 3: {}",
-                program.statements.len()
-            )
-        }
+            assert_eq!(program.statements.len(), 3 );
+        
         struct TestCases {
             expected_identifier: String,
         }
@@ -171,9 +167,9 @@ mod test {
         ];
 
         for (i, tt) in tests.iter().enumerate() {
-            if program.statements.get(i).is_none() {
-                panic!("statement should not have been none")
-            }
+            
+                assert!(!program.statements.get(i).is_none());
+            
             let stmt = program.statements.get(i).unwrap();
             if std::mem::discriminant(stmt)
                 != std::mem::discriminant(&Statement::Let(LetStatement::default()))
@@ -182,23 +178,11 @@ mod test {
             }
             match &stmt {
                 &Statement::Let(val) => {
-                    if val.token_literal() != String::from("let") {
-                        panic!("s.TokenLiteral not 'let'. got={}", val.token_literal())
-                    }
+                    assert_eq!( val.token_literal().as_str(),"let");
                     let name = val.name.clone().unwrap().token_literal();
-                    if name != tt.expected_identifier {
-                        panic!(
-                            "letStmt.Name.Value not '{}'. got= {}",
-                            tt.expected_identifier, name
-                        )
-                    }
+                    assert_eq!( name.as_str(), tt.expected_identifier.as_str());
                     let value = val.name.clone().unwrap().value;
-                    if value != tt.expected_identifier {
-                        panic!(
-                            "letStmt.Name.Value not '{}'. got= {}",
-                            tt.expected_identifier, value
-                        )
-                    }
+                    assert_eq!( value.as_str(), tt.expected_identifier.as_str());
                 }
                 &Statement::Empty => {
                     panic!("Expected a let statement")
@@ -225,24 +209,17 @@ mod test {
 
         check_parse_errors(&parser);
 
-        if program.statements.len() != 3 {
-            panic!(
-                "program statements are not equal to 3: {}",
-                program.statements.len()
-            )
-        }
+        
+            assert_eq!(program.statements.len(),3);
+        
         for statement in program.statements{
             if statement==Statement::Empty{
                 continue;
             }   
-            if std::mem::discriminant(&statement)!=std::mem::discriminant(&Statement::Return(ReturnStatement::new(Token::Return(String::new())))){
-                panic!("Expected type: {:?}, Got: {:?}",&Statement::Return(ReturnStatement::new(Token::Return(String::new()))),&statement)
-            }
+            assert!(matches!(statement,Statement::Return(_)));
             match &statement{
                 Statement::Return(return_statement)=>{
-                    if return_statement.token_literal()!=String::from("return"){
-                        panic!("Expected literal value: {} Got: {}",return_statement.token_literal(),"return")
-                    }
+                    assert_eq!(return_statement.token_literal(),String::from("return"));
                 }
                 _=>{}
             }
