@@ -1,10 +1,10 @@
-use std::os;
-
 use whoami::fallible;
 
 mod lexer;
 mod token;
 mod repl;
+mod ast;
+mod parser;
 
 use repl::repl::{start};
 
