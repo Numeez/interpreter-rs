@@ -27,7 +27,11 @@ impl Lexer {
                 if self.peek_char() == b'=' {
                     let current_ch = self.ch;
                     self.read_char();
-                    let literal = format!("{}{}", (current_ch as char).to_string(), (current_ch as char).to_string());
+                    let literal = format!(
+                        "{}{}",
+                        (current_ch as char).to_string(),
+                        (current_ch as char).to_string()
+                    );
                     Token::Eq(literal)
                 } else {
                     Token::Assign(ASSIGN.to_string())
@@ -40,15 +44,18 @@ impl Lexer {
             b'(' => Token::Lparen(LPAREN.to_string()),
             b')' => Token::Rparen(RPAREN.to_string()),
             b'!' => {
-                if self.peek_char()==b'='{
+                if self.peek_char() == b'=' {
                     let ch = self.ch;
                     self.read_char();
-                    let literal = format!("{}{}", (ch as char).to_string(),(self.ch as char).to_string());
+                    let literal = format!(
+                        "{}{}",
+                        (ch as char).to_string(),
+                        (self.ch as char).to_string()
+                    );
                     Token::NotEq(literal)
-                }else{
-                Token::Bang("!".to_string())
+                } else {
+                    Token::Bang("!".to_string())
                 }
-            
             }
             b'-' => Token::Minus("-".to_string()),
             b'*' => Token::Asterisk("*".to_string()),

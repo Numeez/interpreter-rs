@@ -1,4 +1,3 @@
-
 pub type TokenType = String;
 
 pub const ILLEGAL: &str = "ILLEGAL";
@@ -15,7 +14,7 @@ pub const LPAREN: &str = "(";
 pub const RPAREN: &str = ")";
 pub const ASSIGN: &str = "=";
 
-#[derive(Debug, PartialEq,Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Token {
     Illegal(TokenType),
     Eof(TokenType),
@@ -47,37 +46,35 @@ pub enum Token {
 }
 
 impl Token {
-    pub fn get_literal(&self)->&String{
+    pub fn get_literal(&self) -> &String {
         match self {
-         Token::Assign(s)=>s,
-         Token::Illegal(s)=>s,
-         Token::If(s)=>s,
-         Token::Identifier(s)=>s,
-         Token::Eof(s)=>s,
-         Token::Plus(s)=>s,
-         Token::Function(s)=>s,
-         Token::Lbrace(s)=>s,
-         Token::Rbrace(s)=>s,
-         Token::Lparen(s)=>s,
-         Token::Rparen(s)=>s,
-         Token::Minus(s)=>s,
-         Token::Slash(s)=>s,
-         Token::Asterisk(s)=>s,
-         Token::Gt(s)=>s,
-         Token::Lt(s)=>s,
-         Token::Comma(s)=>s,
-         Token::Semicolon(s)=>s,
-         Token::Else(s)=>s,
-         Token::Return(s)=>s,
-         Token::True(s)=>s,
-         Token::False(s)=>s,
-         Token::Int(s)=>s,
-         Token::Bang(s)=>s,
-         Token::Let(s)=>s,
-         Token::NotEq(s)=>s,
-         Token::Eq(s)=>s,
-
-
+            Token::Assign(s) => s,
+            Token::Illegal(s) => s,
+            Token::If(s) => s,
+            Token::Identifier(s) => s,
+            Token::Eof(s) => s,
+            Token::Plus(s) => s,
+            Token::Function(s) => s,
+            Token::Lbrace(s) => s,
+            Token::Rbrace(s) => s,
+            Token::Lparen(s) => s,
+            Token::Rparen(s) => s,
+            Token::Minus(s) => s,
+            Token::Slash(s) => s,
+            Token::Asterisk(s) => s,
+            Token::Gt(s) => s,
+            Token::Lt(s) => s,
+            Token::Comma(s) => s,
+            Token::Semicolon(s) => s,
+            Token::Else(s) => s,
+            Token::Return(s) => s,
+            Token::True(s) => s,
+            Token::False(s) => s,
+            Token::Int(s) => s,
+            Token::Bang(s) => s,
+            Token::Let(s) => s,
+            Token::NotEq(s) => s,
+            Token::Eq(s) => s,
         }
     }
 }
