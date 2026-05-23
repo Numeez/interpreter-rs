@@ -3,13 +3,14 @@ pub trait Node {
     fn token_literal(&self) -> String;
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq,Debug)]
 pub enum Statement {
     Let(LetStatement),
+    Return(ReturnStatement),
     Empty,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq,Debug)]
 enum Expression {
     Identifier(Identifier),
 }
@@ -41,7 +42,7 @@ impl Node for Program {
     }
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq,Debug,)]
 pub struct LetStatement {
     pub token: Option<Token>,
     pub name: Option<Identifier>,
@@ -67,7 +68,7 @@ impl Node for LetStatement {
     }
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq,Debug)]
 pub struct Identifier {
     pub token: Token,
     pub value: String,
@@ -79,6 +80,26 @@ impl Identifier {
 }
 
 impl Node for Identifier {
+    fn token_literal(&self) -> String {
+        self.token.get_literal().to_string()
+    }
+}
+
+
+
+#[derive(Clone,PartialEq,Debug)]
+pub struct ReturnStatement{
+    pub token: Token,
+    return_value: Option<Expression>
+}
+
+impl ReturnStatement{
+    pub fn new(token:Token)->Self{
+        Self { token:token, return_value:None}
+    }
+}
+
+impl Node for ReturnStatement{
     fn token_literal(&self) -> String {
         self.token.get_literal().to_string()
     }

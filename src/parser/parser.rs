@@ -1,5 +1,5 @@
 use crate::{
-    ast::ast::{Identifier, LetStatement, Node, Program, Statement},
+    ast::ast::{Identifier, LetStatement, Node, Program, Statement,ReturnStatement},
     lexer::lexer::Lexer,
     token::token::Token,
 };
@@ -50,6 +50,17 @@ impl Parser {
                 };
                 return let_statement;
             }
+            Some(Token::Return(_))=>{
+                let return_statement = match &self.parse_return_statement() {
+                    Some(val)=>{
+                        return  Statement::Return(val.clone())
+                    },
+                    None=>{
+                        return Statement::Empty;
+                    }
+                    
+                };
+            }
             _ => Statement::Empty,
         }
     }
@@ -71,6 +82,17 @@ impl Parser {
         }
 
         Some(let_stmt)
+    }
+    fn parse_return_statement(&mut self)->Option<ReturnStatement>{
+        let current_token = self.current_token.clone().unwrap();
+        let return_stmt = ReturnStatement::new(current_token);
+        self.next_token();
+
+         while !self.current_token_is(&Token::Semicolon(";".to_string())) {
+            self.next_token();
+        }
+
+        Some(return_stmt)
     }
     fn expect_peek_token(&mut self, token: &Token) -> bool {
         if self.peek_token_is(token) {
@@ -181,10 +203,54 @@ mod test {
                 &Statement::Empty => {
                     panic!("Expected a let statement")
                 }
+                _=>{}
             }
         }
 
-        fn check_parse_errors(parser: &Parser) {
+    }
+
+    #[test]
+    fn test_return_statements() {
+        let input = r#"
+        return 5;
+        return 10;
+        return 6969;
+
+
+        "#;
+
+        let l = Lexer::new(input.to_string());
+        let mut parser = Parser::new(l);
+        let program = parser.parse_program();
+
+        check_parse_errors(&parser);
+
+        if program.statements.len() != 3 {
+            panic!(
+                "program statements are not equal to 3: {}",
+                program.statements.len()
+            )
+        }
+        for statement in program.statements{
+            if statement==Statement::Empty{
+                continue;
+            }   
+            if std::mem::discriminant(&statement)!=std::mem::discriminant(&Statement::Return(ReturnStatement::new(Token::Return(String::new())))){
+                panic!("Expected type: {:?}, Got: {:?}",&Statement::Return(ReturnStatement::new(Token::Return(String::new()))),&statement)
+            }
+            match &statement{
+                Statement::Return(return_statement)=>{
+                    if return_statement.token_literal()!=String::from("return"){
+                        panic!("Expected literal value: {} Got: {}",return_statement.token_literal(),"return")
+                    }
+                }
+                _=>{}
+            }
+        }
+    }
+
+
+     fn check_parse_errors(parser: &Parser) {
             let errors = parser.Errors();
             if errors.len() == 0 {
                 return;
@@ -194,5 +260,4 @@ mod test {
             }
             panic!("Parsing error detected");
         }
-    }
 }
