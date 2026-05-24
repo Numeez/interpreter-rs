@@ -1,47 +1,43 @@
-use std::io::Empty;
+use crate::token::token::{Token, TokenKind};
 
-use crate::token::token::Token;
 pub trait Node {
     fn token_literal(&self) -> String;
-    fn String(&self)->String;
+    fn string(&self) -> String;
 }
 
-#[derive(PartialEq,Debug)]
+#[derive(PartialEq, Debug)]
 pub enum Statement {
     Let(LetStatement),
     Return(ReturnStatement),
     Empty,
 }
 
-impl Statement{
-    fn string(&self)->String{
+impl Statement {
+    fn string(&self) -> String {
         let mut out = String::new();
-        match self{
-            Statement::Let(val)=>{
-                out.push_str(val.String().as_str());
+        match self {
+            Statement::Let(val) => {
+                out.push_str(val.string().as_str());
             }
-            Statement::Return(val)=>{
-                out.push_str(val.String().as_str());
+            Statement::Return(val) => {
+                out.push_str(val.string().as_str());
             }
-            Statement::Empty=>{}
+            Statement::Empty => {}
         }
         out
     }
 }
 
-#[derive(Clone, PartialEq,Debug)]
+#[derive(Clone, PartialEq, Debug)]
 enum Expression {
     Identifier(Identifier),
 }
 
-
-impl Expression{
-    fn string(&self)->String{
-      match  self {
-          Expression::Identifier(val)=>{
-                    val.String()
-          }
-      }
+impl Expression {
+    fn string(&self) -> String {
+        match self {
+            Expression::Identifier(val) => val.string(),
+        }
     }
 }
 
@@ -70,17 +66,17 @@ impl Node for Program {
             return String::from("");
         }
     }
-    
-    fn String(&self)->String {
+
+    fn string(&self) -> String {
         let mut out = String::new();
-        for statement in &self.statements{
+        for statement in &self.statements {
             out.push_str(&statement.string());
         }
         return out;
     }
 }
 
-#[derive(Clone, PartialEq,Debug,)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct LetStatement {
     pub token: Option<Token>,
     pub name: Option<Identifier>,
@@ -99,81 +95,83 @@ impl Default for LetStatement {
 
 impl Node for LetStatement {
     fn token_literal(&self) -> String {
-        match &self.token {
-            Some(val) => val.get_literal().to_string(),
-            None => String::from(""),
-        }
+        self.token.as_ref().unwrap().literal.to_string()
     }
-    
-    fn String(&self)->String {
-        format!("{} {}={};",self.token.clone().unwrap().get_literal().to_string(),self.name.clone().unwrap().String(),self.value.clone().unwrap().string())   
+
+    fn string(&self) -> String {
+        format!(
+            "{} {}={};",
+            self.token.as_ref().unwrap().literal.to_string(),
+            self.name.as_ref().unwrap().string(),
+            self.value.as_ref().unwrap().string()
+        )
     }
 }
 
-#[derive(Clone, PartialEq,Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct Identifier {
     pub token: Token,
-    pub value: String,
 }
 impl Identifier {
-    pub fn new(token: Token, value: String) -> Self {
-        return Self { token, value };
+    pub fn new(token: Token) -> Self {
+        return Self { token };
     }
 }
 
 impl Node for Identifier {
     fn token_literal(&self) -> String {
-        self.token.get_literal().to_string()
+        self.token.literal.to_string()
     }
-    
-    fn String(&self)->String {
-        self.value.clone()
+
+    fn string(&self) -> String {
+        self.token_literal()
     }
 }
 
-
-
-#[derive(Clone,PartialEq,Debug)]
-pub struct ReturnStatement{
+#[derive(Clone, PartialEq, Debug)]
+pub struct ReturnStatement {
     pub token: Token,
-    return_value: Option<Expression>
+    return_value: Option<Expression>,
 }
 
-impl ReturnStatement{
-    pub fn new(token:Token)->Self{
-        Self { token:token, return_value:None}
+impl ReturnStatement {
+    pub fn new(token: Token) -> Self {
+        Self {
+            token: token,
+            return_value: None,
+        }
     }
 }
 
-impl Node for ReturnStatement{
+impl Node for ReturnStatement {
     fn token_literal(&self) -> String {
-        self.token.get_literal().to_string()
+        self.token.literal.to_string()
     }
-    
-    fn String(&self)->String {
+
+    fn string(&self) -> String {
         todo!()
     }
 }
 
-
 #[cfg(test)]
 
-mod tests{
+mod tests {
     use super::*;
 
     #[test]
-    fn test_stringify_of_program(){
-        let program = Program{
-            statements:vec![
-                Statement::Let(
-                    LetStatement { 
-                        token: Some(Token::Let("let".to_string())),
-                         name: Some(Identifier { token: Token::Identifier("myVar".to_string()), value:"myVar".to_string() }), 
-                         value: Some(Expression::Identifier(Identifier { token: Token::Identifier("anotherVar".to_string()), value:"anotherVar".to_string() })) }
-                ),
-            ]
+    fn test_stringify_of_program() {
+        let program = Program {
+            statements: vec![Statement::Let(LetStatement {
+                token: Some(Token::new(TokenKind::Let, "let")),
+                name: Some(Identifier {
+                    token: Token::new(TokenKind::Identifier, "myVar"),
+                }),
+                value: Some(Expression::Identifier(Identifier {
+                    token: Token::new(TokenKind::Identifier, "anotherVar"),
+                })),
+            })],
         };
 
-        assert_eq!(program.String(),"let myVar=anotherVar;".to_string())
+        assert_eq!(program.string(), "let myVar=anotherVar;")
     }
 }

@@ -1,4 +1,7 @@
-use crate::{lexer::lexer::Lexer, token::token::Token};
+use crate::{
+    lexer::lexer::Lexer,
+    token::token::{Token, TokenKind},
+};
 use std::io::{BufRead, BufReader, Read, Write};
 
 const PROMPT: &str = ">> ";
@@ -16,7 +19,7 @@ pub fn start(input: impl Read, output: impl Write) {
         let mut lexer = Lexer::new(line);
         loop {
             let token = lexer.next_token();
-            if token == Token::Eof("".into()) {
+            if token == Token::new(TokenKind::Eof, "".into()) {
                 break;
             }
             writeln!(out, "{:?}", token).unwrap();

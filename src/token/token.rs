@@ -15,80 +15,57 @@ pub const RPAREN: &str = ")";
 pub const ASSIGN: &str = "=";
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum Token {
-    Illegal(TokenType),
-    Eof(TokenType),
-    Int(TokenType),
-    Comma(TokenType),
-    Semicolon(TokenType),
-    Plus(TokenType),
-    Assign(TokenType),
-    Function(TokenType),
-    Let(TokenType),
-    Rparen(TokenType),
-    Lparen(TokenType),
-    Rbrace(TokenType),
-    Lbrace(TokenType),
-    Minus(TokenType),
-    Bang(TokenType),
-    Asterisk(TokenType),
-    Slash(TokenType),
-    Gt(TokenType),
-    Lt(TokenType),
-    Identifier(TokenType),
-    If(TokenType),
-    Else(TokenType),
-    Return(TokenType),
-    True(TokenType),
-    False(TokenType),
-    Eq(TokenType),
-    NotEq(TokenType),
+pub enum TokenKind {
+    Illegal,
+    Eof,
+    Int,
+    Comma,
+    Semicolon,
+    Plus,
+    Assign,
+    Function,
+    Let,
+    Rparen,
+    Lparen,
+    Rbrace,
+    Lbrace,
+    Minus,
+    Bang,
+    Asterisk,
+    Slash,
+    Gt,
+    Lt,
+    Identifier,
+    If,
+    Else,
+    Return,
+    True,
+    False,
+    Eq,
+    NotEq,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct Token {
+    pub kind: TokenKind,
+    pub literal: String,
+}
 impl Token {
-    pub fn get_literal(&self) -> &String {
-        match self {
-            Token::Assign(s) => s,
-            Token::Illegal(s) => s,
-            Token::If(s) => s,
-            Token::Identifier(s) => s,
-            Token::Eof(s) => s,
-            Token::Plus(s) => s,
-            Token::Function(s) => s,
-            Token::Lbrace(s) => s,
-            Token::Rbrace(s) => s,
-            Token::Lparen(s) => s,
-            Token::Rparen(s) => s,
-            Token::Minus(s) => s,
-            Token::Slash(s) => s,
-            Token::Asterisk(s) => s,
-            Token::Gt(s) => s,
-            Token::Lt(s) => s,
-            Token::Comma(s) => s,
-            Token::Semicolon(s) => s,
-            Token::Else(s) => s,
-            Token::Return(s) => s,
-            Token::True(s) => s,
-            Token::False(s) => s,
-            Token::Int(s) => s,
-            Token::Bang(s) => s,
-            Token::Let(s) => s,
-            Token::NotEq(s) => s,
-            Token::Eq(s) => s,
-        }
+    pub fn new(kind: TokenKind, literal: &str) -> Self {
+        Self { kind:kind, literal:literal.to_string() }
     }
 }
 
-pub fn get_keyword(identifier: String) -> Token {
-    match identifier.as_str() {
-        "let" => Token::Let(identifier),
-        "fn" => Token::Function(identifier),
-        "if" => Token::If(identifier),
-        "else" => Token::Else(identifier),
-        "true" => Token::True(identifier),
-        "false" => Token::False(identifier),
-        "return" => Token::Return(identifier),
+pub fn get_keyword(identifier: &str) -> Token {
+    match identifier {
+        "let" => Token::new(TokenKind::Let, identifier),
+        "fn" => Token::new(TokenKind::Function, identifier),
+        "if" => Token::new(TokenKind::If, identifier),
+        "else" => Token::new(TokenKind::Else, identifier),
+        "true" => Token::new(TokenKind::True, identifier),
+        "false" => Token::new(TokenKind::False, identifier),
+        "return" => Token::new(TokenKind::Return, identifier),
 
-        _ => Token::Identifier(identifier),
+        _ => Token::new(TokenKind::Identifier, identifier),
     }
 }

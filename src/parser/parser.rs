@@ -1,7 +1,7 @@
 use crate::{
-    ast::ast::{Identifier, LetStatement, Node, Program, Statement,ReturnStatement},
+    ast::ast::{Identifier, LetStatement, Node, Program, ReturnStatement, Statement},
     lexer::lexer::Lexer,
-    token::token::Token,
+    token::token::{Token, TokenKind},
 };
 
 #[derive(Default)]
@@ -31,7 +31,7 @@ impl Parser {
     }
     fn parse_program(&mut self) -> Program {
         let mut program = Program::default();
-        while self.current_token != Some(Token::Eof("".to_string())) {
+        while self.current_token != Some(Token::new(TokenKind::Eof, "")) {
             let stmt = self.parse_statements();
             if stmt != Statement::Empty {
                 program.statements.push(stmt);
@@ -42,24 +42,20 @@ impl Parser {
     }
 
     fn parse_statements(&mut self) -> Statement {
-        match &self.current_token {
-            Some(Token::Let(_)) => {
+        match self.current_token.as_ref().unwrap().kind {
+            TokenKind::Let => {
                 let let_statement = match &self.parse_let_statement() {
                     Some(val) => Statement::Let(val.clone()),
                     None => Statement::Empty,
                 };
                 return let_statement;
             }
-            Some(Token::Return(_))=>{
+            TokenKind::Return => {
                 let return_statement = match &self.parse_return_statement() {
-                    Some(val)=>{
-                        return  Statement::Return(val.clone())
-                    },
-                    None=>{
-                        return Statement::Empty;
-                    }
-                    
+                    Some(val) => Statement::Return(val.clone()),
+                    None => Statement::Empty,
                 };
+                return return_statement;
             }
             _ => Statement::Empty,
         }
@@ -68,33 +64,32 @@ impl Parser {
     fn parse_let_statement(&mut self) -> Option<LetStatement> {
         let mut let_stmt = LetStatement::default();
         let_stmt.token = self.current_token.clone();
-        if !self.expect_peek_token(&Token::Identifier(self.peek_token.clone().unwrap().get_literal().to_string())) {
+        if !self.expect_peek_token(&TokenKind::Identifier) {
             return None;
         }
         let current_token = self.current_token.clone().unwrap();
-        let literal = current_token.get_literal().to_string();
-        let_stmt.name = Some(Identifier::new(current_token, literal));
-        if !self.expect_peek_token(&Token::Assign(self.peek_token.clone().unwrap().get_literal().to_string())) {
+        let_stmt.name = Some(Identifier::new(current_token));
+        if !self.expect_peek_token(&TokenKind::Assign) {
             return None;
         }
-        while !self.current_token_is(&Token::Semicolon(";".to_string())) {
+        while !self.current_token_is(&TokenKind::Semicolon) {
             self.next_token();
         }
 
         Some(let_stmt)
     }
-    fn parse_return_statement(&mut self)->Option<ReturnStatement>{
+    fn parse_return_statement(&mut self) -> Option<ReturnStatement> {
         let current_token = self.current_token.clone().unwrap();
         let return_stmt = ReturnStatement::new(current_token);
         self.next_token();
 
-         while !self.current_token_is(&Token::Semicolon(";".to_string())) {
+        while !self.current_token_is(&TokenKind::Semicolon) {
             self.next_token();
         }
 
         Some(return_stmt)
     }
-    fn expect_peek_token(&mut self, token: &Token) -> bool {
+    fn expect_peek_token(&mut self, token: &TokenKind) -> bool {
         if self.peek_token_is(token) {
             self.next_token();
             return true;
@@ -103,22 +98,16 @@ impl Parser {
             return false;
         }
     }
-    fn peek_token_is(&self, token: &Token) -> bool {
-        match &self.peek_token {
-            Some(val) => val==token,
-            None => false,
-        }
+    fn peek_token_is(&self, token: &TokenKind) -> bool {
+        return &self.peek_token.as_ref().unwrap().kind == token;
     }
-    fn current_token_is(&self, token: &Token) -> bool {
-        match &self.current_token {
-            Some(val) => val==token,
-            None => false,
-        }
+    fn current_token_is(&self, token: &TokenKind) -> bool {
+        return &self.current_token.as_ref().unwrap().kind == token;
     }
     fn Errors(&self) -> &Vec<String> {
         return &self.errors;
     }
-    fn peek_error(&mut self, token: &Token) {
+    fn peek_error(&mut self, token: &TokenKind) {
         let msg = format!(
             "expected next token to be {:?}, got {:?} instead",
             token,
@@ -148,8 +137,8 @@ mod test {
 
         check_parse_errors(&parser);
 
-            assert_eq!(program.statements.len(), 3 );
-        
+        assert_eq!(program.statements.len(), 3);
+
         struct TestCases {
             expected_identifier: String,
         }
@@ -167,9 +156,8 @@ mod test {
         ];
 
         for (i, tt) in tests.iter().enumerate() {
-            
-                assert!(!program.statements.get(i).is_none());
-            
+            assert!(!program.statements.get(i).is_none());
+
             let stmt = program.statements.get(i).unwrap();
             if std::mem::discriminant(stmt)
                 != std::mem::discriminant(&Statement::Let(LetStatement::default()))
@@ -178,19 +166,18 @@ mod test {
             }
             match &stmt {
                 &Statement::Let(val) => {
-                    assert_eq!( val.token_literal().as_str(),"let");
-                    let name = val.name.clone().unwrap().token_literal();
-                    assert_eq!( name.as_str(), tt.expected_identifier.as_str());
-                    let value = val.name.clone().unwrap().value;
-                    assert_eq!( value.as_str(), tt.expected_identifier.as_str());
+                    assert_eq!(val.token_literal().as_str(), "let");
+                    let name = val.name.as_ref().unwrap().token_literal();
+                    assert_eq!(name.as_str(), tt.expected_identifier.as_str());
+                    let value = val.name.as_ref().unwrap().token_literal();
+                    assert_eq!(value.as_str(), tt.expected_identifier.as_str());
                 }
                 &Statement::Empty => {
                     panic!("Expected a let statement")
                 }
-                _=>{}
+                _ => {}
             }
         }
-
     }
 
     #[test]
@@ -209,32 +196,30 @@ mod test {
 
         check_parse_errors(&parser);
 
-        
-            assert_eq!(program.statements.len(),3);
-        
-        for statement in program.statements{
-            if statement==Statement::Empty{
+        assert_eq!(program.statements.len(), 3);
+
+        for statement in program.statements {
+            if statement == Statement::Empty {
                 continue;
-            }   
-            assert!(matches!(statement,Statement::Return(_)));
-            match &statement{
-                Statement::Return(return_statement)=>{
-                    assert_eq!(return_statement.token_literal(),String::from("return"));
+            }
+            assert!(matches!(statement, Statement::Return(_)));
+            match &statement {
+                Statement::Return(return_statement) => {
+                    assert_eq!(return_statement.token_literal(), String::from("return"));
                 }
-                _=>{}
+                _ => {}
             }
         }
     }
 
-
-     fn check_parse_errors(parser: &Parser) {
-            let errors = parser.Errors();
-            if errors.len() == 0 {
-                return;
-            }
-            for error in errors {
-                eprintln!("{}", error)
-            }
-            panic!("Parsing error detected");
+    fn check_parse_errors(parser: &Parser) {
+        let errors = parser.Errors();
+        if errors.len() == 0 {
+            return;
         }
+        for error in errors {
+            eprintln!("{}", error)
+        }
+        panic!("Parsing error detected");
+    }
 }
