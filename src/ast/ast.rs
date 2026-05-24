@@ -1,6 +1,9 @@
+use std::io::Empty;
+
 use crate::token::token::Token;
 pub trait Node {
     fn token_literal(&self) -> String;
+    fn String(&self)->String;
 }
 
 #[derive(PartialEq,Debug)]
@@ -10,9 +13,36 @@ pub enum Statement {
     Empty,
 }
 
+impl Statement{
+    fn string(&self)->String{
+        let mut out = String::new();
+        match self{
+            Statement::Let(val)=>{
+                out.push_str(val.String().as_str());
+            }
+            Statement::Return(val)=>{
+                out.push_str(val.String().as_str());
+            }
+            Statement::Empty=>{}
+        }
+        out
+    }
+}
+
 #[derive(Clone, PartialEq,Debug)]
 enum Expression {
     Identifier(Identifier),
+}
+
+
+impl Expression{
+    fn string(&self)->String{
+      match  self {
+          Expression::Identifier(val)=>{
+                    val.String()
+          }
+      }
+    }
 }
 
 pub struct Program {
@@ -40,6 +70,14 @@ impl Node for Program {
             return String::from("");
         }
     }
+    
+    fn String(&self)->String {
+        let mut out = String::new();
+        for statement in &self.statements{
+            out.push_str(&statement.string());
+        }
+        return out;
+    }
 }
 
 #[derive(Clone, PartialEq,Debug,)]
@@ -66,6 +104,10 @@ impl Node for LetStatement {
             None => String::from(""),
         }
     }
+    
+    fn String(&self)->String {
+        format!("{} {}={};",self.token.clone().unwrap().get_literal().to_string(),self.name.clone().unwrap().String(),self.value.clone().unwrap().string())   
+    }
 }
 
 #[derive(Clone, PartialEq,Debug)]
@@ -82,6 +124,10 @@ impl Identifier {
 impl Node for Identifier {
     fn token_literal(&self) -> String {
         self.token.get_literal().to_string()
+    }
+    
+    fn String(&self)->String {
+        self.value.clone()
     }
 }
 
@@ -102,5 +148,32 @@ impl ReturnStatement{
 impl Node for ReturnStatement{
     fn token_literal(&self) -> String {
         self.token.get_literal().to_string()
+    }
+    
+    fn String(&self)->String {
+        todo!()
+    }
+}
+
+
+#[cfg(test)]
+
+mod tests{
+    use super::*;
+
+    #[test]
+    fn test_stringify_of_program(){
+        let program = Program{
+            statements:vec![
+                Statement::Let(
+                    LetStatement { 
+                        token: Some(Token::Let("let".to_string())),
+                         name: Some(Identifier { token: Token::Identifier("myVar".to_string()), value:"myVar".to_string() }), 
+                         value: Some(Expression::Identifier(Identifier { token: Token::Identifier("anotherVar".to_string()), value:"anotherVar".to_string() })) }
+                ),
+            ]
+        };
+
+        assert_eq!(program.String(),"let myVar=anotherVar;".to_string())
     }
 }
