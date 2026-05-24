@@ -1,4 +1,7 @@
+#![allow(unused_imports,dead_code,private_interfaces)]
 use crate::token::token::{Token, TokenKind};
+
+
 
 pub trait Node {
     fn token_literal(&self) -> String;

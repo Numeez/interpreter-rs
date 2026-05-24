@@ -1,3 +1,5 @@
+
+
 use crate::token::token::{
     ASSIGN, COMMA, LBRACE, LPAREN, PLUS, RBRACE, RPAREN, SEMICOLON, Token, TokenKind, get_keyword,
 };
@@ -266,8 +268,8 @@ mod tests {
             Token::new(TokenKind::Eof, ""),
         ];
 
-        for (i, tt) in test_cases.iter().enumerate() {
-            assert_eq!(&lexer.next_token(), tt)
+        for tt in test_cases {
+            assert_eq!(lexer.next_token(), tt)
         }
     }
     #[test]

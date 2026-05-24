@@ -1,8 +1,10 @@
+#![allow(unused_imports,dead_code,private_interfaces)]
 use crate::{
-    ast::ast::{Identifier, LetStatement, Node, Program, ReturnStatement, Statement},
+    ast::ast::{Identifier, LetStatement,Node, Program, ReturnStatement, Statement},
     lexer::lexer::Lexer,
     token::token::{Token, TokenKind},
 };
+
 
 #[derive(Default)]
 struct Parser {
@@ -13,6 +15,7 @@ struct Parser {
 }
 
 impl Parser {
+
     pub fn new(lexer: Lexer) -> Self {
         let mut parser = Self {
             lexer: lexer,
@@ -29,6 +32,7 @@ impl Parser {
         self.current_token = self.peek_token.take();
         self.peek_token = Some(self.lexer.next_token());
     }
+    
     fn parse_program(&mut self) -> Program {
         let mut program = Program::default();
         while self.current_token != Some(Token::new(TokenKind::Eof, "")) {
@@ -104,7 +108,8 @@ impl Parser {
     fn current_token_is(&self, token: &TokenKind) -> bool {
         return &self.current_token.as_ref().unwrap().kind == token;
     }
-    fn Errors(&self) -> &Vec<String> {
+    
+    fn errors(&self) -> &Vec<String> {
         return &self.errors;
     }
     fn peek_error(&mut self, token: &TokenKind) {
@@ -213,7 +218,7 @@ mod test {
     }
 
     fn check_parse_errors(parser: &Parser) {
-        let errors = parser.Errors();
+        let errors = parser.errors();
         if errors.len() == 0 {
             return;
         }

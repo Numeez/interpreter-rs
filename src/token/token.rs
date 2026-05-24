@@ -1,11 +1,12 @@
-pub type TokenType = String;
+#![allow(dead_code)]
 
+
+pub type TokenType = String;
 pub const ILLEGAL: &str = "ILLEGAL";
 pub const PLUS: &str = "+";
 pub const COMMA: &str = ",";
 pub const FUNCTION: &str = "FUNCTION";
 pub const IDENT: &str = "IDENT";
-pub const INT: &str = "INT";
 pub const SEMICOLON: &str = ";";
 pub const LET: &str = "LET";
 pub const LBRACE: &str = "{";
