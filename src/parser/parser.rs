@@ -1,10 +1,27 @@
-#![allow(unused_imports,dead_code,private_interfaces)]
+#![allow(unused_imports, dead_code, private_interfaces)]
+use core::panic;
+use std::{collections::HashMap, io::SeekFrom};
+
 use crate::{
-    ast::ast::{Identifier, LetStatement,Node, Program, ReturnStatement, Statement},
+    ast::ast::{
+        Expression, ExpressionStatement, Identifier, IntegerLiteral, LetStatement, Node, Program, ReturnStatement, Statement
+    },
     lexer::lexer::Lexer,
     token::token::{Token, TokenKind},
 };
 
+type PrefixParseFn = fn(&Parser)->Expression;
+type InfixParseFn = fn(&Parser,Expression)->Expression;
+
+enum Precedence {
+    LOWEST,
+    EQUAL,
+    LESSGREATER,
+    SUM,
+    PRODUCT,
+    PREFIX,
+    CALL,
+}
 
 #[derive(Default)]
 struct Parser {
@@ -12,27 +29,39 @@ struct Parser {
     current_token: Option<Token>,
     peek_token: Option<Token>,
     errors: Vec<String>,
+    prefix_parse_fns:HashMap<TokenKind,PrefixParseFn>,
+    infix_parse_fns:HashMap<TokenKind,InfixParseFn>
 }
 
 impl Parser {
-
     pub fn new(lexer: Lexer) -> Self {
         let mut parser = Self {
             lexer: lexer,
             current_token: None,
             peek_token: None,
             errors: vec![],
+            prefix_parse_fns:HashMap::new(),
+            infix_parse_fns:HashMap::new(),
         };
+        parser.register_prefix_parse_fn(TokenKind::Identifier, Parser::parse_identifier);
+        parser.register_prefix_parse_fn(TokenKind::Int, Parser::parse_integer_literal);
         parser.next_token();
         parser.next_token();
         return parser;
+    }
+
+    fn register_prefix_parse_fn(&mut self,token_kind:TokenKind,func:PrefixParseFn){
+        self.prefix_parse_fns.insert(token_kind,func);
+    }
+    fn register_infix_parse_fn(&mut self,token_kind:TokenKind,func:InfixParseFn){
+        self.infix_parse_fns.insert(token_kind,func);
     }
 
     fn next_token(&mut self) {
         self.current_token = self.peek_token.take();
         self.peek_token = Some(self.lexer.next_token());
     }
-    
+
     fn parse_program(&mut self) -> Program {
         let mut program = Program::default();
         while self.current_token != Some(Token::new(TokenKind::Eof, "")) {
@@ -45,6 +74,34 @@ impl Parser {
         program
     }
 
+    fn parse_identifier(&self)-> Expression{
+        Expression::Identifier(Identifier { token: self.current_token.clone().unwrap() })
+    }
+
+    fn parse_integer_literal(&self)->Expression{
+        let integer_literal = self.get_integer_literal().unwrap();
+        Expression::Integer(integer_literal)
+    }
+    fn get_integer_literal(&self)->Option<IntegerLiteral>{
+        let (token,value) = match &self.current_token{
+            Some(token)=>{
+                match token.literal.parse::<i64>(){
+                    Ok(val)=>{
+                        (token,val)
+                    }   
+                    Err(_)=>{
+                        return  None;
+                    }       
+                }
+            }
+            None=>{
+                return  None;
+            }
+        };
+        let integer = IntegerLiteral{token: token.clone(),value};
+        Some(integer)
+
+    }
     fn parse_statements(&mut self) -> Statement {
         match self.current_token.as_ref().unwrap().kind {
             TokenKind::Let => {
@@ -61,7 +118,13 @@ impl Parser {
                 };
                 return return_statement;
             }
-            _ => Statement::Empty,
+            _ => {
+                let expression_statement = match &self.parse_expression_statement() {
+                    Some(val) => Statement::Expression(val.clone()),
+                    None => Statement::Empty,
+                };
+                return expression_statement;
+            }
         }
     }
 
@@ -93,6 +156,28 @@ impl Parser {
 
         Some(return_stmt)
     }
+    fn parse_expression_statement(&mut self) -> Option<ExpressionStatement> {
+        let expression_statement = ExpressionStatement {
+            token: self.current_token.clone().unwrap(),
+            expression: self.parse_expression(Precedence::LOWEST),
+        };
+        if self.peek_token_is(&TokenKind::Semicolon){
+            self.next_token();
+        }
+
+        Some(expression_statement)
+    }
+    fn parse_expression(&mut self,precedence:Precedence)-> Option<Expression>{
+        let parse_function = self.prefix_parse_fns.get(&self.current_token.as_ref().unwrap().kind);
+        match parse_function{
+            Some(function)=>{
+                let expression = function(self);
+                return Some(expression);
+            }
+            None=>{return None;}
+        }
+
+    }
     fn expect_peek_token(&mut self, token: &TokenKind) -> bool {
         if self.peek_token_is(token) {
             self.next_token();
@@ -108,7 +193,7 @@ impl Parser {
     fn current_token_is(&self, token: &TokenKind) -> bool {
         return &self.current_token.as_ref().unwrap().kind == token;
     }
-    
+
     fn errors(&self) -> &Vec<String> {
         return &self.errors;
     }
@@ -124,6 +209,8 @@ impl Parser {
 
 #[cfg(test)]
 mod test {
+    use crate::lexer::lexer;
+
     use super::*;
 
     #[test]
@@ -214,6 +301,55 @@ mod test {
                 }
                 _ => {}
             }
+        }
+    }
+
+    #[test]
+    fn test_identifier_expression() {
+        let input = "foobar;";
+        let l = Lexer::new(input.to_string());
+        let mut p = Parser::new(l);
+        let program = p.parse_program();
+        check_parse_errors(&p);
+        assert_eq!(program.statements.len(), 1);
+        let stmt = program.statements.get(0).unwrap();
+        assert!(matches!(stmt, Statement::Expression(_)));
+        match stmt {
+            Statement::Expression(val) => {
+                assert!(matches!(val.expression.as_ref().unwrap(), &Expression::Identifier(_)));
+                match &val.expression.as_ref().unwrap() {
+                    Expression::Identifier(val) => {
+                        assert_eq!(&val.token_literal(), "foobar")
+                    }
+                    _ =>{}
+                }
+            }
+            _ => {}
+        }
+    }
+
+    #[test]
+    fn test_integer_literal() {
+        let input = "5;";
+        let l = Lexer::new(input.to_string());
+        let mut p = Parser::new(l);
+        let program = p.parse_program();
+        check_parse_errors(&p);
+        assert_eq!(program.statements.len(), 1);
+        let stmt = program.statements.get(0).unwrap();
+        assert!(matches!(stmt, Statement::Expression(_)));
+        match stmt {
+            Statement::Expression(val) => {
+                assert!(matches!(val.expression.as_ref().unwrap(), &Expression::Integer(_)));
+                match val.expression.as_ref().unwrap() {
+                    Expression::Integer(val) => {
+                        assert_eq!(&val.token_literal(), "5");
+                        assert_eq!(val.value, 5i64);
+                    }
+                    _ =>{}
+                }
+            }
+            _ => {}
         }
     }
 

@@ -1,6 +1,5 @@
 #![allow(dead_code)]
 
-
 pub type TokenType = String;
 pub const ILLEGAL: &str = "ILLEGAL";
 pub const PLUS: &str = "+";
@@ -15,7 +14,7 @@ pub const LPAREN: &str = "(";
 pub const RPAREN: &str = ")";
 pub const ASSIGN: &str = "=";
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone,Eq,Hash)]
 pub enum TokenKind {
     Illegal,
     Eof,
@@ -53,7 +52,10 @@ pub struct Token {
 }
 impl Token {
     pub fn new(kind: TokenKind, literal: &str) -> Self {
-        Self { kind:kind, literal:literal.to_string() }
+        Self {
+            kind: kind,
+            literal: literal.to_string(),
+        }
     }
 }
 

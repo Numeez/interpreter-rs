@@ -1,7 +1,5 @@
-#![allow(unused_imports,dead_code,private_interfaces)]
+#![allow(unused_imports, dead_code, private_interfaces)]
 use crate::token::token::{Token, TokenKind};
-
-
 
 pub trait Node {
     fn token_literal(&self) -> String;
@@ -12,6 +10,7 @@ pub trait Node {
 pub enum Statement {
     Let(LetStatement),
     Return(ReturnStatement),
+    Expression(ExpressionStatement),
     Empty,
 }
 
@@ -25,6 +24,9 @@ impl Statement {
             Statement::Return(val) => {
                 out.push_str(val.string().as_str());
             }
+            Statement::Expression(val) => {
+                out.push_str(val.string().as_str());
+            }
             Statement::Empty => {}
         }
         out
@@ -32,14 +34,16 @@ impl Statement {
 }
 
 #[derive(Clone, PartialEq, Debug)]
-enum Expression {
+pub enum Expression {
     Identifier(Identifier),
+    Integer(IntegerLiteral)
 }
 
 impl Expression {
     fn string(&self) -> String {
         match self {
             Expression::Identifier(val) => val.string(),
+            Expression::Integer(val)=>val.string()
         }
     }
 }
@@ -156,6 +160,36 @@ impl Node for ReturnStatement {
     }
 }
 
+#[derive(Clone, PartialEq, Debug)]
+pub struct ExpressionStatement {
+    pub token: Token,
+    pub expression: Option<Expression>,
+}
+impl Node for ExpressionStatement {
+    fn token_literal(&self) -> String {
+        self.token.literal.to_string()
+    }
+
+    fn string(&self) -> String {
+        self.expression.as_ref().unwrap().string()
+    }
+}
+
+
+#[derive(Clone, PartialEq, Debug)]
+pub struct IntegerLiteral{
+    pub token:Token,
+    pub value:i64
+}
+impl Node for IntegerLiteral {
+    fn token_literal(&self) -> String {
+        self.token.literal.to_string()
+    }
+
+    fn string(&self) -> String {
+        self.token.literal.to_string()
+    }
+}
 #[cfg(test)]
 
 mod tests {
@@ -178,3 +212,4 @@ mod tests {
         assert_eq!(program.string(), "let myVar=anotherVar;")
     }
 }
+

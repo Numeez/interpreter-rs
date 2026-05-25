@@ -1,5 +1,3 @@
-
-
 use crate::token::token::{
     ASSIGN, COMMA, LBRACE, LPAREN, PLUS, RBRACE, RPAREN, SEMICOLON, Token, TokenKind, get_keyword,
 };
@@ -28,11 +26,7 @@ impl Lexer {
                 if self.peek_char() == b'=' {
                     let current_ch = self.ch;
                     self.read_char();
-                    let literal = format!(
-                        "{}{}",
-                        (current_ch as char),
-                        (current_ch as char)
-                    );
+                    let literal = format!("{}{}", (current_ch as char), (current_ch as char));
                     Token::new(TokenKind::Eq, literal.as_str())
                 } else {
                     Token::new(TokenKind::Assign, ASSIGN)
