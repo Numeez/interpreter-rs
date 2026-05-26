@@ -1,4 +1,6 @@
 #![allow(unused_imports, dead_code, private_interfaces)]
+use std::fmt::Write;
+
 use crate::token::token::{Token, TokenKind};
 
 pub trait Node {
@@ -36,14 +38,16 @@ impl Statement {
 #[derive(Clone, PartialEq, Debug)]
 pub enum Expression {
     Identifier(Identifier),
-    Integer(IntegerLiteral)
+    Integer(IntegerLiteral),
+    PrefixStatement(PrefixExpression),
 }
 
 impl Expression {
     fn string(&self) -> String {
         match self {
             Expression::Identifier(val) => val.string(),
-            Expression::Integer(val)=>val.string()
+            Expression::Integer(val) => val.string(),
+            Expression::PrefixStatement(val) => val.string(),
         }
     }
 }
@@ -175,11 +179,32 @@ impl Node for ExpressionStatement {
     }
 }
 
+#[derive(Clone, PartialEq, Debug)]
+pub struct PrefixExpression {
+    pub token: Token,
+    pub operator: String,
+    pub right: Option<Box<Expression>>,
+}
+
+impl Node for PrefixExpression {
+    fn token_literal(&self) -> String {
+        self.token.literal.to_string()
+    }
+
+    fn string(&self) -> String {
+        let mut out = String::new();
+        out.push_str("(");
+        out.push_str(&self.operator.as_str());
+        out.push_str(&self.right.clone().unwrap().string());
+        out.push_str(")");
+        out
+    }
+}
 
 #[derive(Clone, PartialEq, Debug)]
-pub struct IntegerLiteral{
-    pub token:Token,
-    pub value:i64
+pub struct IntegerLiteral {
+    pub token: Token,
+    pub value: i64,
 }
 impl Node for IntegerLiteral {
     fn token_literal(&self) -> String {
@@ -212,4 +237,3 @@ mod tests {
         assert_eq!(program.string(), "let myVar=anotherVar;")
     }
 }
-

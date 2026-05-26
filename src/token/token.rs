@@ -14,7 +14,7 @@ pub const LPAREN: &str = "(";
 pub const RPAREN: &str = ")";
 pub const ASSIGN: &str = "=";
 
-#[derive(Debug, PartialEq, Clone,Eq,Hash)]
+#[derive(Debug, PartialEq, Clone, Eq, Hash)]
 pub enum TokenKind {
     Illegal,
     Eof,
