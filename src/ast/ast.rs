@@ -40,6 +40,7 @@ pub enum Expression {
     Identifier(Identifier),
     Integer(IntegerLiteral),
     PrefixStatement(PrefixExpression),
+    InfixExpression(InfixExpression)
 }
 
 impl Expression {
@@ -48,6 +49,7 @@ impl Expression {
             Expression::Identifier(val) => val.string(),
             Expression::Integer(val) => val.string(),
             Expression::PrefixStatement(val) => val.string(),
+            Expression::InfixExpression(val)=>val.string(),
         }
     }
 }
@@ -195,6 +197,30 @@ impl Node for PrefixExpression {
         let mut out = String::new();
         out.push_str("(");
         out.push_str(&self.operator.as_str());
+        out.push_str(&self.right.clone().unwrap().string());
+        out.push_str(")");
+        out
+    }
+}
+
+#[derive(Clone, PartialEq, Debug)]
+pub struct InfixExpression{
+    pub token:Token,
+    pub left:Option<Box<Expression>>,
+    pub operator:String,
+    pub right:Option<Box<Expression>>
+}
+
+impl Node for InfixExpression{
+    fn token_literal(&self) -> String {
+        self.token.literal.to_string()
+    }
+
+    fn string(&self) -> String {
+        let mut out  = String::new();
+        out.push_str("(");
+        out.push_str(&self.left.clone().unwrap().string());
+        out.push_str(&format!(" {} ",self.operator));
         out.push_str(&self.right.clone().unwrap().string());
         out.push_str(")");
         out
