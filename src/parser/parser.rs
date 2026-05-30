@@ -69,6 +69,7 @@ impl Parser {
         parser.register_infix_parse_fn(TokenKind::NotEq, Parser::parse_infix_expression);
         parser.register_infix_parse_fn(TokenKind::Gt, Parser::parse_infix_expression);
         parser.register_infix_parse_fn(TokenKind::Lt, Parser::parse_infix_expression);
+        parser.register_infix_parse_fn(TokenKind::Plus, Parser::parse_infix_expression);
         parser.register_infix_parse_fn(TokenKind::Minus, Parser::parse_infix_expression);
         parser.register_infix_parse_fn(TokenKind::Slash, Parser::parse_infix_expression);
         parser.register_infix_parse_fn(TokenKind::Asterisk, Parser::parse_infix_expression);
@@ -210,7 +211,7 @@ impl Parser {
         let parse_function = self
             .prefix_parse_fns
             .get(&self.current_token.as_ref().unwrap().kind);
-        let mut leftExp = match parse_function {
+        let mut left_exp = match parse_function {
             Some(function) => {
                 let expression = function(self);
                  Some(expression)
@@ -224,15 +225,15 @@ impl Parser {
             match func{
                 Some(function)=>{
                     self.next_token();
-                    leftExp = Some(function(self,leftExp.unwrap()))
+                    left_exp = Some(function(self,left_exp.unwrap()))
                 },
                 None=>{
-                    return leftExp;
+                    return left_exp;
                 }
             }
             }
 
-        leftExp
+        left_exp
 
     }
     fn expect_peek_token(&mut self, token: &TokenKind) -> bool {
@@ -545,7 +546,8 @@ mod test {
                 Statement::Expression(val) => match &val.expression.as_ref().unwrap() {
                     Expression::InfixExpression(prefix_expression) => {
                         assert_eq!(prefix_expression.operator,test.operator);
-                        test_integer_literal();
+                        assert!(assert_integer_literal(prefix_expression.left.as_ref().unwrap(),test.left));
+                        assert!(assert_integer_literal(prefix_expression.right.as_ref().unwrap(),test.right));
                     },
                     _ =>{}
 
@@ -559,7 +561,25 @@ mod test {
 
     }
 
-    fn check_parse_errors(parser: &Parser) {
+    fn assert_integer_literal(expression:&Expression,expected_val:i64)->bool{
+        match expression {
+            Expression::Integer(val)=>{
+                if val.value!=expected_val{
+                    return false;
+                }
+                if val.token_literal()!=format!("{}",val.value){
+                    return false;
+                }
+                return true;
+            },
+            _ =>{
+                return false;
+            }
+        }
+       
+         
+        }
+         fn check_parse_errors(parser: &Parser) {
         let errors = parser.errors();
         if errors.len() == 0 {
             return;
@@ -569,4 +589,8 @@ mod test {
         }
         panic!("Parsing error detected");
     }
+
 }
+
+   
+
