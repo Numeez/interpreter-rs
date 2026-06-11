@@ -40,7 +40,8 @@ pub enum Expression {
     Identifier(Identifier),
     Integer(IntegerLiteral),
     PrefixStatement(PrefixExpression),
-    InfixExpression(InfixExpression)
+    InfixExpression(InfixExpression),
+    BooleanExp(BooleanExpression)
 }
 
 impl Expression {
@@ -49,7 +50,8 @@ impl Expression {
             Expression::Identifier(val) => val.string(),
             Expression::Integer(val) => val.string(),
             Expression::PrefixStatement(val) => val.string(),
-            Expression::InfixExpression(val)=>val.string(),
+            Expression::InfixExpression(val) => val.string(),
+            Expression::BooleanExp(val)=>val.string(),
         }
     }
 }
@@ -204,23 +206,39 @@ impl Node for PrefixExpression {
 }
 
 #[derive(Clone, PartialEq, Debug)]
-pub struct InfixExpression{
-    pub token:Token,
-    pub left:Option<Box<Expression>>,
-    pub operator:String,
-    pub right:Option<Box<Expression>>
+pub struct BooleanExpression{
+    pub   token: Token,
+    pub value:bool
 }
 
-impl Node for InfixExpression{
+impl Node for BooleanExpression{
     fn token_literal(&self) -> String {
         self.token.literal.to_string()
     }
 
     fn string(&self) -> String {
-        let mut out  = String::new();
+        self.token.literal.to_string()
+    }
+}
+
+#[derive(Clone, PartialEq, Debug)]
+pub struct InfixExpression {
+    pub token: Token,
+    pub left: Option<Box<Expression>>,
+    pub operator: String,
+    pub right: Option<Box<Expression>>,
+}
+
+impl Node for InfixExpression {
+    fn token_literal(&self) -> String {
+        self.token.literal.to_string()
+    }
+
+    fn string(&self) -> String {
+        let mut out = String::new();
         out.push_str("(");
         out.push_str(&self.left.clone().unwrap().string());
-        out.push_str(&format!(" {} ",self.operator));
+        out.push_str(&format!(" {} ", self.operator));
         out.push_str(&self.right.clone().unwrap().string());
         out.push_str(")");
         out
@@ -263,3 +281,5 @@ mod tests {
         assert_eq!(program.string(), "let myVar=anotherVar;")
     }
 }
+
+
